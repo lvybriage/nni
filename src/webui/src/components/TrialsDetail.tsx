@@ -203,6 +203,7 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
         const targetValue = event.target.value;
         if (targetValue === '' || targetValue === ' ') {
             const { tableListSource } = this.state;
+            console.info(tableListSource);
             if (this._isMounted) {
                 this.setState(() => ({
                     isHasSearch: false,
@@ -214,7 +215,15 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
             const searchResultList: Array<TableObj> = [];
             Object.keys(tableListSource).map(key => {
                 const item = tableListSource[key];
+                const strParameters = JSON.stringify(item.description.parameters, null, 4);
+                console.info(typeof strParameters);
+                console.info('str', strParameters);
+                console.info('exit', strParameters.includes(targetValue));
+                // if (strParameters.includes(targetValue)) {
+                //     searchResultList.push(item);
+                // }
                 if (item.sequenceId.toString() === targetValue
+                    || strParameters.includes(targetValue)
                     || item.id.includes(targetValue)
                     || item.status.toUpperCase().includes(targetValue.toUpperCase())
                 ) {
