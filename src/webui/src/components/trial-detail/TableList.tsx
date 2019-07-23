@@ -1,13 +1,14 @@
 import * as React from 'react';
 import axios from 'axios';
 import ReactEcharts from 'echarts-for-react';
-import { Row, Table, Button, Popconfirm, Modal, Checkbox } from 'antd';
+import { Row, Table, Button, Popconfirm, Modal, Checkbox, message, Icon } from 'antd';
 const CheckboxGroup = Checkbox.Group;
 import { MANAGER_IP, trialJobStatus, COLUMN, COLUMN_INDEX } from '../../static/const';
 import { convertDuration, intermediateGraphOption, killJob } from '../../static/function';
 import { TableObj, TrialJob } from '../../static/interface';
 import OpenRow from '../public-child/OpenRow';
 import IntermediateVal from '../public-child/IntermediateVal'; // table default metric column
+import Resubmit from '../Modal/Resubmit-job-modal';
 import '../../static/style/search.scss';
 require('../../static/style/tableStatus.css');
 require('../../static/style/logPath.scss');
@@ -38,6 +39,9 @@ interface TableListState {
     isObjFinal: boolean;
     isShowColumn: boolean;
     columnSelected: Array<string>; // user select columnKeys
+    isResubmitConfirm: boolean; // 是不是提示用户要继续resubmit
+    resubmitID: string; // 用户要resubmit的job id
+    isShowSucceedModal: boolean; // resubmit succeed
 }
 
 interface ColumnIndex {
@@ -59,8 +63,60 @@ class TableList extends React.Component<TableListProps, TableListState> {
             modalVisible: false,
             isObjFinal: false,
             isShowColumn: false,
-            columnSelected: COLUMN
+            columnSelected: COLUMN,
+            isResubmitConfirm: false,
+            resubmitID: '',
+            isShowSucceedModal: false
         };
+    }
+
+    changeSucceedState = (bool: boolean) => {
+        if (this._isMounted === true) {
+            this.setState(() => ({ isShowSucceedModal: bool }));
+        }
+    }
+
+    resubmitAction = (id: string) => {
+        // 弹出用户的modal框
+        if (this._isMounted === true) {
+            this.setState(() => ({ isResubmitConfirm: true, resubmitID: id }));
+        }
+    }
+
+    cancelResubmit = () => {
+        // 关掉resubmit的modal
+        if (this._isMounted === true) {
+            this.setState(() => ({ isResubmitConfirm: false }));
+        }
+    }
+
+    reSubmitJob = () => {
+        // 用户确实想要去resubmit job
+        const { resubmitID } = this.state;
+        axios(`${MANAGER_IP}/resubmit/${resubmitID}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            }
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    if (this._isMounted === true) {
+                        this.setState(() => ({ isShowSucceedModal: true, isResubmitConfirm: false }));
+                    }
+                } else {
+                    message.error('fail to resubmit the job');
+                }
+            })
+            .catch(error => {
+                // if (error.response.status === 500) {
+                //     if (error.response.data.error) {
+                //         message.error(error.response.data.error);
+                //     } else {
+                //         message.error('500 error, fail to resubmit the job');
+                //     }
+                // }
+            });
     }
 
     showIntermediateModal = (id: string) => {
@@ -135,7 +191,6 @@ class TableList extends React.Component<TableListProps, TableListState> {
                 case 'Status':
                 case 'Operation':
                 case 'Default':
-                case 'Intermediate result':
                     break;
                 default:
                     finalKeys.push(checkedValues[m]);
@@ -195,7 +250,8 @@ class TableList extends React.Component<TableListProps, TableListState> {
     render() {
 
         const { entries, tableSource, updateList } = this.props;
-        const { intermediateOption, modalVisible, isShowColumn, columnSelected } = this.state;
+        const { intermediateOption, modalVisible, isShowColumn,
+            columnSelected, isResubmitConfirm, isShowSucceedModal } = this.state;
         let showTitle = COLUMN;
         let bgColor = '';
         const trialJob: Array<TrialJob> = [];
@@ -258,7 +314,7 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         title: 'Duration',
                         dataIndex: 'duration',
                         key: 'duration',
-                        width: 140,
+                        width: 100,
                         // the sort of number
                         sorter: (a: TableObj, b: TableObj) => (a.duration as number) - (b.duration as number),
                         render: (text: string, record: TableObj) => {
@@ -327,57 +383,50 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         title: 'Operation',
                         dataIndex: 'operation',
                         key: 'operation',
-                        width: 90,
+                        width: 120,
                         render: (text: string, record: TableObj) => {
                             let trialStatus = record.status;
-                            let flagKill = false;
-                            if (trialStatus === 'RUNNING') {
-                                flagKill = true;
-                            } else {
-                                flagKill = false;
-                            }
+                            const flag: boolean = trialStatus === 'RUNNING' ? false : true;
+                            const isDisableResubmit: boolean = trialStatus === 'FAILED' ? false : true;
                             return (
-                                flagKill
-                                    ?
-                                    (
-                                        <Popconfirm
-                                            title="Are you sure to cancel this trial?"
-                                            onConfirm={killJob.
-                                                bind(this, record.key, record.id, record.status, updateList)}
-                                        >
-                                            <Button type="primary" className="tableButton">Kill</Button>
-                                        </Popconfirm>
-                                    )
-                                    :
-                                    (
+                                <Row id="detail-button">
+                                    {/* see intermediate result graph */}
+                                    <Button
+                                        type="primary"
+                                        className="common-style"
+                                        onClick={this.showIntermediateModal.bind(this, record.id)}
+                                        title="Intermediate"
+                                    >
+                                        <Icon type="line-chart" />
+                                    </Button>
+                                    {/* kill job */}
+                                    <Popconfirm
+                                        title="Are you sure to cancel this trial?"
+                                        onConfirm={killJob.
+                                            bind(this, record.key, record.id, record.status, updateList)}
+                                    >
                                         <Button
-                                            type="primary"
-                                            className="tableButton"
-                                            disabled={true}
+                                            type="default"
+                                            disabled={flag}
+                                            className="margin-mediate special"
+                                            title="kill"
                                         >
-                                            Kill
+                                            <Icon type="stop" />
                                         </Button>
-                                    )
-                            );
-                        },
-                    });
-                    break;
+                                    </Popconfirm>
 
-                case 'Intermediate result':
-                    showColumn.push({
-                        title: 'Intermediate result',
-                        dataIndex: 'intermediate',
-                        key: 'intermediate',
-                        width: '16%',
-                        render: (text: string, record: TableObj) => {
-                            return (
-                                <Button
-                                    type="primary"
-                                    className="tableButton"
-                                    onClick={this.showIntermediateModal.bind(this, record.id)}
-                                >
-                                    Intermediate
-                                </Button>
+                                    {/* resubmit job */}
+                                    <Button
+                                        type="default"
+                                        className="special"
+                                        disabled={isDisableResubmit}
+                                        onClick={this.resubmitAction.bind(this, record.id)}
+                                        title="resubmit"
+                                    >
+                                        {/* resubmit */}
+                                        <Icon type="redo" />
+                                    </Button>
+                                </Row>
                             );
                         },
                     });
@@ -457,6 +506,14 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         className="titleColumn"
                     />
                 </Modal>
+                {/* resubmit trial modal confirm */}
+                <Resubmit
+                    isResubmitConfirm={isResubmitConfirm}
+                    reSubmitJob={this.reSubmitJob}
+                    cancelResubmit={this.cancelResubmit}
+                    isShowOk={isShowSucceedModal}
+                    changeSucceedState={this.changeSucceedState}
+                />
             </Row>
         );
     }
