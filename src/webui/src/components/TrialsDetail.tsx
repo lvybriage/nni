@@ -342,7 +342,7 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
         const {
             tableListSource, searchResultSource, isHasSearch, isMultiPhase,
             entriesTable, experimentPlatform, searchSpace, experimentLogCollection,
-            whichGraph
+            whichGraph, experimentStatus
         } = this.state;
         const source = isHasSearch ? searchResultSource : tableListSource;
         return (
@@ -419,6 +419,7 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
                     tableSource={source}
                     isMultiPhase={isMultiPhase}
                     platform={experimentPlatform}
+                    experimentStatus={experimentStatus}
                     updateList={this.getDetailSource}
                     logCollection={experimentLogCollection}
                     ref={(tabList) => this.tableList = tabList}

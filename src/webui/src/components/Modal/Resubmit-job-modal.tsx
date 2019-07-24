@@ -73,8 +73,7 @@ class Resubmit extends React.Component<ResubmitProps, {}> {
                     <Row className="resubmit">
                         <h2 className="title"><Icon type="check-circle" />Resubmit successfully</h2>
                         <div className="hint">
-                            We have created a new trial, you can view the information of this trial
-                            by ID XXXX No.XXX.
+                            We have created a new trial.
                         </div>
                         <Row className="buttons">
                             {/* close the modal */}

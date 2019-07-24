@@ -29,6 +29,7 @@ interface TableListProps {
     tableSource: Array<TableObj>;
     updateList: Function;
     platform: string;
+    experimentStatus: string;
     logCollection: boolean;
     isMultiPhase: boolean;
 }
@@ -42,6 +43,7 @@ interface TableListState {
     isResubmitConfirm: boolean; // 是不是提示用户要继续resubmit
     resubmitID: string; // 用户要resubmit的job id
     isShowSucceedModal: boolean; // resubmit succeed
+    idListResubmit: Array<string>; // 存放所有resubmit过的trial job
 }
 
 interface ColumnIndex {
@@ -66,7 +68,8 @@ class TableList extends React.Component<TableListProps, TableListState> {
             columnSelected: COLUMN,
             isResubmitConfirm: false,
             resubmitID: '',
-            isShowSucceedModal: false
+            isShowSucceedModal: false,
+            idListResubmit: ['']
         };
     }
 
@@ -93,29 +96,39 @@ class TableList extends React.Component<TableListProps, TableListState> {
     reSubmitJob = () => {
         // 用户确实想要去resubmit job
         const { resubmitID } = this.state;
-        axios(`${MANAGER_IP}/resubmit/${resubmitID}`, {
+        axios(`${MANAGER_IP}/resubmit`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json;charset=utf-8'
+            },
+            data: {
+                'job_id': resubmitID
             }
         })
             .then(res => {
                 if (res.status === 200) {
+                    const { idListResubmit } = this.state;
+                    let newIdList = idListResubmit;
+                    newIdList.push(resubmitID);
                     if (this._isMounted === true) {
-                        this.setState(() => ({ isShowSucceedModal: true, isResubmitConfirm: false }));
+                        this.setState(() => ({
+                            isShowSucceedModal: true,
+                            isResubmitConfirm: false,
+                            idListResubmit: newIdList
+                        }));
                     }
                 } else {
                     message.error('fail to resubmit the job');
                 }
             })
             .catch(error => {
-                // if (error.response.status === 500) {
-                //     if (error.response.data.error) {
-                //         message.error(error.response.data.error);
-                //     } else {
-                //         message.error('500 error, fail to resubmit the job');
-                //     }
-                // }
+                if (error.response.status === 500) {
+                    if (error.response.data.error) {
+                        message.error(error.response.data.error);
+                    } else {
+                        message.error('500 error, fail to resubmit the job');
+                    }
+                }
             });
     }
 
@@ -249,9 +262,12 @@ class TableList extends React.Component<TableListProps, TableListState> {
 
     render() {
 
-        const { entries, tableSource, updateList } = this.props;
+        const { entries, tableSource, updateList, experimentStatus } = this.props;
         const { intermediateOption, modalVisible, isShowColumn,
-            columnSelected, isResubmitConfirm, isShowSucceedModal } = this.state;
+            columnSelected, isResubmitConfirm, isShowSucceedModal, idListResubmit } = this.state;
+        const decisive =
+            experimentStatus === 'DONE' || experimentStatus === 'ERROR' || experimentStatus === 'STOPPED'
+                ? true : false;
         let showTitle = COLUMN;
         let bgColor = '';
         const trialJob: Array<TrialJob> = [];
@@ -387,7 +403,18 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         render: (text: string, record: TableObj) => {
                             let trialStatus = record.status;
                             const flag: boolean = trialStatus === 'RUNNING' ? false : true;
-                            const isDisableResubmit: boolean = trialStatus === 'FAILED' ? false : true;
+
+                            let isDisableResubmit: boolean = true;
+                            if (decisive !== true) {
+                                const hadResubmit = idListResubmit.find(index => index === record.id);
+                                if (trialStatus === 'FAILED') {
+                                    isDisableResubmit = false;
+                                    if (hadResubmit !== undefined) {
+                                        isDisableResubmit = true;
+                                    }
+                                }
+                            }
+                            // resubmit √ -> disabled
                             return (
                                 <Row id="detail-button">
                                     {/* see intermediate result graph */}
