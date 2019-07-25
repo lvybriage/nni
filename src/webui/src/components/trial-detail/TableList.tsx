@@ -1,7 +1,7 @@
 import * as React from 'react';
 import axios from 'axios';
-import ReactEcharts, { Func } from 'echarts-for-react';
-import { Row, Table, Button, Popconfirm, Modal, Checkbox, Select, Input, Icon } from 'antd';
+import ReactEcharts from 'echarts-for-react';
+import { Row, Table, Button, Popconfirm, Modal, Checkbox, Select, Input } from 'antd';
 const Option = Select.Option;
 const CheckboxGroup = Checkbox.Group;
 import { MANAGER_IP, trialJobStatus, COLUMN, COLUMN_INDEX } from '../../static/const';
@@ -269,68 +269,6 @@ class TableList extends React.Component<TableListProps, TableListState> {
         }
     }
 
-    getColumnSearchProps = (dataIndex: string) => ({
-        filterDropdown: (setSelectedKeys: Function, selectedKeys: number, confirm: Function, clearFilters: Function ) => (
-        // filterDropdown: ({setSelectedKeys: string,selectedKeys: Array<string>, confirm: Function, clearFilters: Function }) => (
-            <div style={{ padding: 8 }}>
-                <Input
-                    ref={node => {
-                        this.searchInput = node;
-                    }}
-                    placeholder={`Search ${dataIndex}`}
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => this.handleSearch(selectedKeys, confirm)}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                />
-                <Button
-                    type="primary"
-                    onClick={() => this.handleSearch(selectedKeys, confirm)}
-                    icon="search"
-                    size="small"
-                    style={{ width: 90, marginRight: 8 }}
-                >
-                    Search
-            </Button>
-                <Button onClick={() => this.handleReset(clearFilters)} size="small" style={{ width: 90 }}>
-                    Reset
-            </Button>
-            </div>
-        ),
-
-        filterIcon: (filtered: string) => (
-            <Icon type="search" style={{ color: filtered ? '#1890ff' : undefined }} />
-        ),
-        onFilter: (value: string, record: TableObj) =>
-            record[dataIndex]
-                .toString()
-                .toLowerCase()
-                .includes(value.toLowerCase()),
-        onFilterDropdownVisibleChange: (visible: boolean) => {
-            if (visible) {
-                setTimeout(() => { if (this.searchInput !== null) { this.searchInput.select() } });
-            }
-        },
-        // render: text => (
-        //     <Highlighter
-        //         highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-        //         searchWords={[this.state.searchText]}
-        //         autoEscape
-        //         textToHighlight={text.toString()}
-        //     />
-        // ),
-    });
-
-    handleSearch = (selectedKeys: number, confirm: Function) => {
-        confirm();
-        this.setState({ searchIdText: selectedKeys[0] });
-    };
-
-    handleReset = (clearFilters: Function) => {
-        clearFilters();
-        this.setState({ searchIdText: '' });
-    };
-
     componentDidMount() {
         this._isMounted = true;
     }
@@ -386,10 +324,7 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         key: 'sequenceId',
                         width: 120,
                         className: 'tableHead',
-                        // sorter:
-                        //     (a: TableObj, b: TableObj) =>
-                        //         (a.sequenceId as number) - (b.sequenceId as number),
-                        ...this.getColumnSearchProps('sequenceId')
+                        sorter: (a: TableObj, b: TableObj) => (a.sequenceId as number) - (b.sequenceId as number)
                     });
                     break;
                 case 'ID':
