@@ -30,3 +30,8 @@ Click the tab "Trials Detail" to see the status of the all trials. Specifically:
 ## Feedback
 
 [Known Issues](https://github.com/Microsoft/nni/issues).
+
+<!-- 
+    效果图在 https://github.com/microsoft/nni/pull/1392里
+    default metric 跟 best curve是通过switch分别展示的。
+ -->
