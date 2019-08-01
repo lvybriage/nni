@@ -298,7 +298,7 @@ class Intermediate extends React.Component<IntermediateProps, IntermediateState>
                                 <Col span={3}>
                                     <span>Step</span>
                                     <input
-                                        placeholder="point"
+                                        placeholder="epoch"
                                         ref={input => this.pointInput = input}
                                         className="strange"
                                     />
@@ -306,12 +306,12 @@ class Intermediate extends React.Component<IntermediateProps, IntermediateState>
                                 <Col className="range" span={10}>
                                     <span>Intermediate result</span>
                                     <input
-                                        placeholder="number"
+                                        placeholder="min-metric"
                                         ref={input => this.minValInput = input}
                                     />
                                     <span className="heng">-</span>
                                     <input
-                                        placeholder="number"
+                                        placeholder="max-metric"
                                         ref={input => this.maxValInput = input}
                                     />
                                     <Button
