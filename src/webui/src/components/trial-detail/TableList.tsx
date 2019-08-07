@@ -195,6 +195,7 @@ class TableList extends React.Component<TableListProps, TableListState> {
     render() {
 
         const { entries, tableSource, updateList } = this.props;
+        console.info('tableSource', tableSource);
         const { intermediateOption, modalVisible, isShowColumn, columnSelected } = this.state;
         let showTitle = COLUMN;
         let bgColor = '';
@@ -306,15 +307,58 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         dataIndex: 'acc',
                         key: 'acc',
                         width: 120,
+                        // wrong ×
+                        // sorter: (a: TableObj, b: TableObj) =>
+                        //     (a.description.intermediate[a.description.intermediate.length - 1]
+                        //     - b.description.intermediate[a.description.intermediate.length - 1]),
                         sorter: (a: TableObj, b: TableObj) => {
-                            const aa = a.description.intermediate;
-                            const bb = b.description.intermediate;
-                            if (aa !== undefined && bb !== undefined) {
-                                return aa[aa.length - 1] - bb[bb.length - 1];
-                            } else {
-                                return NaN;
+                            const oneArr = a.description.intermediate;
+                            const otherArr = b.description.intermediate;
+                            let one = oneArr[oneArr.length - 1];
+                            let other = otherArr[otherArr.length - 1];
+                            if (one === undefined) {
+                                one = 0;
                             }
+                            if (other === undefined) {
+                                other = 0;
+                            }
+                            return one - other;
+                            // two numbers
+                            // if (oneArr.length !== 0 && otherArr.length !== 0) {
+                            //     return one - other;
+                            // } else if (oneArr.length !== 0 || otherArr.length !== 0) {
+                            //     // one number, one undefined
+                            //     if (oneArr.length !== 0) {
+                            //         return one;
+                            //     } else {
+                            //         return other;
+                            //     }
+                            // } else {
+                            //     // two undefined
+                            //     return NaN;
+                            // }
                         },
+                        // wrong ×
+                        // sorter: (a: TableObj, b: TableObj) => {
+                        //     const oneArr = a.description.intermediate;
+                        //     const otherArr = b.description.intermediate;
+                        //     const one = oneArr[oneArr.length - 1];
+                        //     const other = otherArr[otherArr.length - 1];
+                        //     // two numbers
+                        //     if (oneArr.length !== 0 && otherArr.length !== 0) {
+                        //         return one - other;
+                        //     } else if (oneArr.length !== 0 || otherArr.length !== 0) {
+                        //         // one number, one undefined
+                        //         if (oneArr.length !== 0) {
+                        //             return one;
+                        //         } else {
+                        //             return other;
+                        //         }
+                        //     } else {
+                        //         // two undefined
+                        //         return NaN;
+                        //     }
+                        // },
                         render: (text: string, record: TableObj) => {
                             return (
                                 <IntermediateVal record={record} />
