@@ -83,6 +83,24 @@ class Para extends React.Component<ParaProps, ParaState> {
         ) => {
             // get data for every lines. if dim is choice type, number -> toString()
             const paraYdata: number[][] = [];
+            console.info('eachparameters', eachTrialParams);
+            eachTrialParams.forEach(element => {
+                Object.keys(element).forEach(key => {
+                    let item = element[key];
+                    if (typeof item === 'object') {
+                        Object.keys(item).forEach(index => {
+                            // if (index !== '_name') {
+                            //     element[key] = item[index];
+                            // }
+                            if (index !== '_name') {
+                                element[key] = item[index];
+                            } else {
+                                element[key] = 1;
+                            }
+                        });
+                    }
+                });
+            });
             Object.keys(eachTrialParams).map(item => {
                 let temp: Array<number> = [];
                 for (let i = 0; i < dimName.length; i++) {
@@ -95,6 +113,7 @@ class Para extends React.Component<ParaProps, ParaState> {
                 }
                 paraYdata.push(temp);
             });
+            console.info('after', eachTrialParams);
             // add acc
             Object.keys(paraYdata).map(item => {
                 paraYdata[item].push(accPara[item]);
@@ -238,16 +257,27 @@ class Para extends React.Component<ParaProps, ParaState> {
                         },
                         axisLabel: {
                             formatter: function (value: string) {
-                                const length = value.length;
-                                if (length > 16) {
-                                    const temp = value.split('');
-                                    for (let m = 16; m < temp.length; m += 17) {
-                                        temp[m] += '\n';
+                                let temp = '';
+                                if (length > 2) {
+                                    const much = Math.ceil(value.length / 2);
+                                    for (let m = 0; m < much; m++) {
+                                        temp += value.substring(2 + m * 2).concat('\n');
                                     }
-                                    return temp.join('');
+                                    return temp;
                                 } else {
                                     return value;
                                 }
+
+                                // const length = value.length;
+                                // if (length > 16) {
+                                //     const temp = value.split('');
+                                //     for (let m = 16; m < temp.length; m += 17) {
+                                //         temp[m] += '\n';
+                                //     }
+                                //     return temp.join('');
+                                // } else {
+                                //     return value;
+                                // }
                             }
                         },
                     }
@@ -338,16 +368,29 @@ class Para extends React.Component<ParaProps, ParaState> {
                     },
                     axisLabel: {
                         formatter: function (value: string) {
-                            const length = value.length;
-                            if (length > 16) {
-                                const temp = value.split('');
-                                for (let i = 16; i < temp.length; i += 17) {
-                                    temp[i] += '\n';
+                            console.info('value', value);
+                            console.info('typeor', typeof value);
+                            let temp = '';
+                            if (value.length > 2) {
+                                const much = Math.ceil(value.length / 2);
+                                for (let m = 0; m < much; m++) {
+                                    temp += value.substring(2 + m * 2).concat('\n');
                                 }
-                                return temp.join('');
+                                console.info('temp', temp);
+                                return temp;
                             } else {
                                 return value;
                             }
+                            // const length = value.length;
+                            // if (length > 16) {
+                            //     const temp = value.split('');
+                            //     for (let i = 16; i < temp.length; i += 17) {
+                            //         temp[i] += '\n';
+                            //     }
+                            //     return temp.join('');
+                            // } else {
+                            //     return value;
+                            // }
                         }
                     },
                 }
