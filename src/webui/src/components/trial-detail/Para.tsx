@@ -83,24 +83,6 @@ class Para extends React.Component<ParaProps, ParaState> {
         ) => {
             // get data for every lines. if dim is choice type, number -> toString()
             const paraYdata: number[][] = [];
-            console.info('eachparameters', eachTrialParams);
-            eachTrialParams.forEach(element => {
-                Object.keys(element).forEach(key => {
-                    let item = element[key];
-                    if (typeof item === 'object') {
-                        Object.keys(item).forEach(index => {
-                            // if (index !== '_name') {
-                            //     element[key] = item[index];
-                            // }
-                            if (index !== '_name') {
-                                element[key] = item[index];
-                            } else {
-                                element[key] = 1;
-                            }
-                        });
-                    }
-                });
-            });
             Object.keys(eachTrialParams).map(item => {
                 let temp: Array<number> = [];
                 for (let i = 0; i < dimName.length; i++) {
@@ -113,7 +95,6 @@ class Para extends React.Component<ParaProps, ParaState> {
                 }
                 paraYdata.push(temp);
             });
-            console.info('after', eachTrialParams);
             // add acc
             Object.keys(paraYdata).map(item => {
                 paraYdata[item].push(accPara[item]);
@@ -147,94 +128,159 @@ class Para extends React.Component<ParaProps, ParaState> {
 
     hyperParaPic = (source: Array<TableObj>, searchSpace: string) => {
         // filter succeed trials [{}, {}, {}]
-        const dataSource: Array<TableObj> = source.filter(filterByStatus);
+        const origin = source.filter(filterByStatus);
+        const dataSource: Array<TableObj> = JSON.parse(JSON.stringify(origin));
         const lenOfDataSource: number = dataSource.length;
         const accPara: Array<number> = [];
         // specific value array
         const eachTrialParams: Array<string> = [];
         // experiment interface search space obj
         const searchRange = searchSpace !== undefined ? JSON.parse(searchSpace) : '';
+        // nest search space
+        let isNested: boolean = false;
+        Object.keys(searchRange).map(item => {
+            if (typeof searchRange[item]._value[0] === 'object') {
+                isNested = true;
+                return;
+            }
+        });
+        // console.info(isNetest);
         const dimName = Object.keys(searchRange);
         if (this._isMounted === true) {
             this.setState(() => ({ dimName: dimName }));
         }
-
         const parallelAxis: Array<Dimobj> = [];
         // search space range and specific value [only number]
         let i = 0;
-        for (i; i < dimName.length; i++) {
-            const searchKey = searchRange[dimName[i]];
-            switch (searchKey._type) {
-                case 'uniform':
-                case 'quniform':
-                    parallelAxis.push({
-                        dim: i,
-                        name: dimName[i],
-                        max: searchKey._value[1],
-                        min: searchKey._value[0]
-                    });
-                    break;
-
-                case 'randint':
-                    parallelAxis.push({
-                        dim: i,
-                        name: dimName[i],
-                        min: searchKey._value[0],
-                        max: searchKey._value[1],
-                    });
-                    break;
-
-                case 'choice':
-                    const data: Array<string> = [];
-                    for (let j = 0; j < searchKey._value.length; j++) {
-                        data.push(searchKey._value[j].toString());
-                    }
-                    parallelAxis.push({
-                        dim: i,
-                        name: dimName[i],
-                        type: 'category',
-                        data: data,
-                        boundaryGap: true,
-                        axisLine: {
-                            lineStyle: {
-                                type: 'dotted', // axis type,solid，dashed，dotted
-                                width: 1
-                            }
-                        },
-                        axisTick: {
-                            show: true,
-                            interval: 0,
-                            alignWithLabel: true,
-                        },
-                        axisLabel: {
-                            show: true,
-                            interval: 0,
-                            // rotate: 30
-                        },
-                    });
-                    break;
-                // support log distribute
-                case 'loguniform':
-                    if (lenOfDataSource > 1) {
+        if (isNested === false) {
+            for (i; i < dimName.length; i++) {
+                const searchKey = searchRange[dimName[i]];
+                switch (searchKey._type) {
+                    case 'uniform':
+                    case 'quniform':
                         parallelAxis.push({
                             dim: i,
                             name: dimName[i],
-                            type: 'log',
+                            max: searchKey._value[1],
+                            min: searchKey._value[0]
                         });
-                    } else {
+                        break;
+
+                    case 'randint':
+                        parallelAxis.push({
+                            dim: i,
+                            name: dimName[i],
+                            min: searchKey._value[0],
+                            max: searchKey._value[1],
+                        });
+                        break;
+
+                    case 'choice':
+                        const data: Array<string> = [];
+                        for (let j = 0; j < searchKey._value.length; j++) {
+                            data.push(searchKey._value[j].toString());
+                        }
+                        parallelAxis.push({
+                            dim: i,
+                            name: dimName[i],
+                            type: 'category',
+                            data: data,
+                            boundaryGap: true,
+                            axisLine: {
+                                lineStyle: {
+                                    type: 'dotted', // axis type,solid，dashed，dotted
+                                    width: 1
+                                }
+                            },
+                            axisTick: {
+                                show: true,
+                                interval: 0,
+                                alignWithLabel: true,
+                            },
+                            axisLabel: {
+                                show: true,
+                                interval: 0,
+                                // rotate: 30
+                            },
+                        });
+                        break;
+                    // support log distribute
+                    case 'loguniform':
+                        if (lenOfDataSource > 1) {
+                            parallelAxis.push({
+                                dim: i,
+                                name: dimName[i],
+                                type: 'log',
+                            });
+                        } else {
+                            parallelAxis.push({
+                                dim: i,
+                                name: dimName[i]
+                            });
+                        }
+                        break;
+
+                    default:
                         parallelAxis.push({
                             dim: i,
                             name: dimName[i]
                         });
-                    }
-                    break;
-
-                default:
-                    parallelAxis.push({
-                        dim: i,
-                        name: dimName[i]
-                    });
-
+                }
+            }
+        } else {
+            for (i; i < dimName.length; i++) {
+                const searchKey = searchRange[dimName[i]];
+                switch (searchKey._type) {
+                    case 'choice':
+                        const data: Array<string> = [];
+                        let j = 0;
+                        for (j; j < searchKey._value.length; j++) {
+                            const item = searchKey._value[j];
+                            Object.keys(item).map(key => {
+                                if (key !== '_name' && key !== '_type') {
+                                    Object.keys(item[key]).map(index => {
+                                        if (index !== '_type') {
+                                            const realChoice = item[key][index];
+                                            Object.keys(realChoice).map(m => {
+                                                data.push(`${item._name}_${realChoice[m]}`);
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        data.push('null');
+                        console.info(data);
+                        parallelAxis.push({
+                            dim: i,
+                            name: dimName[i],
+                            type: 'category',
+                            data: data,
+                            boundaryGap: true,
+                            axisLine: {
+                                lineStyle: {
+                                    type: 'dotted', // axis type,solid，dashed，dotted
+                                    width: 1
+                                }
+                            },
+                            axisTick: {
+                                show: true,
+                                interval: 0,
+                                alignWithLabel: true,
+                            },
+                            axisLabel: {
+                                show: true,
+                                interval: 0,
+                                // rotate: 30
+                            },
+                        });
+                        break;
+                    default:
+                        parallelAxis.push({
+                            dim: i,
+                            name: dimName[i]
+                        });
+                }
             }
         }
         parallelAxis.push({
@@ -257,27 +303,16 @@ class Para extends React.Component<ParaProps, ParaState> {
                         },
                         axisLabel: {
                             formatter: function (value: string) {
-                                let temp = '';
-                                if (length > 2) {
-                                    const much = Math.ceil(value.length / 2);
-                                    for (let m = 0; m < much; m++) {
-                                        temp += value.substring(2 + m * 2).concat('\n');
+                                const length = value.length;
+                                if (length > 16) {
+                                    const temp = value.split('');
+                                    for (let m = 16; m < temp.length; m += 17) {
+                                        temp[m] += '\n';
                                     }
-                                    return temp;
+                                    return temp.join('');
                                 } else {
                                     return value;
                                 }
-
-                                // const length = value.length;
-                                // if (length > 16) {
-                                //     const temp = value.split('');
-                                //     for (let m = 16; m < temp.length; m += 17) {
-                                //         temp[m] += '\n';
-                                //     }
-                                //     return temp.join('');
-                                // } else {
-                                //     return value;
-                                // }
                             }
                         },
                     }
@@ -309,6 +344,23 @@ class Para extends React.Component<ParaProps, ParaState> {
                     }
                 }
             });
+            // nested search space, deal data
+            if (isNested !== false) {
+                eachTrialParams.forEach(element => {
+                    Object.keys(element).forEach(key => {
+                        let item = element[key];
+                        if (typeof item === 'object') {
+                            Object.keys(item).forEach(index => {
+                                if (index !== '_name') {
+                                    element[key] = `${item._name}_${item[index]}`;
+                                } else {
+                                    element[key] = 'null';
+                                }
+                            });
+                        }
+                    });
+                });
+            }
             if (this._isMounted) {
                 // if not return final result
                 const maxVal = accPara.length === 0 ? 1 : Math.max(...accPara);
@@ -368,29 +420,16 @@ class Para extends React.Component<ParaProps, ParaState> {
                     },
                     axisLabel: {
                         formatter: function (value: string) {
-                            console.info('value', value);
-                            console.info('typeor', typeof value);
-                            let temp = '';
-                            if (value.length > 2) {
-                                const much = Math.ceil(value.length / 2);
-                                for (let m = 0; m < much; m++) {
-                                    temp += value.substring(2 + m * 2).concat('\n');
+                            const length = value.length;
+                            if (length > 16) {
+                                const temp = value.split('');
+                                for (let i = 16; i < temp.length; i += 17) {
+                                    temp[i] += '\n';
                                 }
-                                console.info('temp', temp);
-                                return temp;
+                                return temp.join('');
                             } else {
                                 return value;
                             }
-                            // const length = value.length;
-                            // if (length > 16) {
-                            //     const temp = value.split('');
-                            //     for (let i = 16; i < temp.length; i += 17) {
-                            //         temp[i] += '\n';
-                            //     }
-                            //     return temp.join('');
-                            // } else {
-                            //     return value;
-                            // }
                         }
                     },
                 }
