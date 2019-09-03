@@ -8,6 +8,24 @@ interface TableObj {
     acc?: FinalType; // draw accuracy graph
     description: Parameters;
     color?: string;
+    // for detail page, table [intermediate result] column
+    intermeidateCount?: number;
+    // for detail page, table [startTime and endTime] column
+    startTime?: number;
+    endTime?: number;
+}
+
+interface TrialJobs {
+    id: string;
+    sequenceId: number;
+    status: string;
+    hyperParameters: [];
+    logPath?: string;
+    startTime?: number;
+    endTime?: number;
+    finalMetricData: FinalResult[];
+    // 会影响detail overview页面吗？
+    intermediate: Array<Metric>;
 }
 
 interface SearchSpace {
@@ -57,7 +75,7 @@ interface AccurPoint {
 }
 
 interface DetailAccurPoint {
-    acc: number;
+    acc: string;
     index: number;
     searchSpace: object;
 }
@@ -122,8 +140,18 @@ interface ExperimentInfo {
     optimizeMode: string;
 }
 
+// metric data - intermediate list
+interface Metric {
+    timestamp: number;
+    trialJobId: string;
+    parameterId: string;
+    type: string;
+    sequence: number;
+    data: string;
+}
+
 export {
     TableObj, Parameters, Experiment, AccurPoint, TrialNumber, TrialJob,
     DetailAccurPoint, TooltipForAccuracy, ParaObj, Dimobj, FinalResult, FinalType,
-    TooltipForIntermediate, SearchSpace, Intermedia, ExperimentInfo
+    TooltipForIntermediate, SearchSpace, Intermedia, ExperimentInfo, TrialJobs, Metric
 };

@@ -7,7 +7,7 @@ require('echarts/lib/component/tooltip');
 require('echarts/lib/component/title');
 
 interface Runtrial {
-    trialId: Array<string>;
+    trialId: Array<number>;
     trialTime: Array<number>;
 }
 
@@ -34,13 +34,13 @@ class Duration extends React.Component<DurationProps, DurationState> {
     }
 
     initDuration = (source: Array<TableObj>) => {
-        const trialId: Array<string> = [];
+        // sequenced id === Trial No.
+        const trialId: Array<number> = [];
         const trialTime: Array<number> = [];
         const trialJobs = source.filter(filterDuration);
-        Object.keys(trialJobs).map(item => {
-            const temp = trialJobs[item];
-            trialId.push(temp.sequenceId);
-            trialTime.push(temp.duration);
+        trialJobs.forEach(element => {
+            trialId.push(element.sequenceId);
+            trialTime.push(element.duration);
         });
         return {
             tooltip: {
@@ -129,14 +129,13 @@ class Duration extends React.Component<DurationProps, DurationState> {
 
     drawDurationGraph = (source: Array<TableObj>) => {
         // why this function run two times when props changed?
-        const trialId: Array<string> = [];
+        const trialId: Array<number> = [];
         const trialTime: Array<number> = [];
         const trialRun: Array<Runtrial> = [];
         const trialJobs = source.filter(filterDuration);
-        Object.keys(trialJobs).map(item => {
-            const temp = trialJobs[item];
-            trialId.push(temp.sequenceId);
-            trialTime.push(temp.duration);
+        trialJobs.forEach(element => {
+            trialId.push(element.sequenceId);
+            trialTime.push(element.duration);
         });
         trialRun.push({
             trialId: trialId,

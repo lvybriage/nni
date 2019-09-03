@@ -52,13 +52,12 @@ class Intermediate extends React.Component<IntermediateProps, IntermediateState>
                 }));
             }
             const trialIntermediate: Array<Intermedia> = [];
-            Object.keys(source).map(item => {
-                const temp = source[item];
+            source.forEach(item => {
                 trialIntermediate.push({
-                    name: temp.id,
-                    data: temp.description.intermediate,
+                    name: item.id,
+                    data: item.description.intermediate,
                     type: 'line',
-                    hyperPara: temp.description.parameters
+                    hyperPara: item.description.parameters
                 });
             });
             // find max intermediate number
@@ -67,9 +66,8 @@ class Intermediate extends React.Component<IntermediateProps, IntermediateState>
             // max length
             const length = trialIntermediate[0].data.length;
             const xAxis: Array<number> = [];
-            Object.keys(trialIntermediate).map(item => {
-                const temp = trialIntermediate[item];
-                legend.push(temp.name);
+            trialIntermediate.forEach(element => {
+                legend.push(element.name);
             });
             for (let i = 1; i <= length; i++) {
                 xAxis.push(i);
@@ -163,20 +161,18 @@ class Intermediate extends React.Component<IntermediateProps, IntermediateState>
                     const position = JSON.parse(pointVal);
                     const min = JSON.parse(minVal);
                     if (maxVal === '') {
-                        Object.keys(source).map(item => {
-                            const temp = source[item];
-                            const val = temp.description.intermediate[position - 1];
+                        source.forEach(element => {
+                            const val = element.description.intermediate[position - 1];
                             if (val >= min) {
-                                filterSource.push(temp);
+                                filterSource.push(element);
                             }
                         });
                     } else {
                         const max = JSON.parse(maxVal);
-                        Object.keys(source).map(item => {
-                            const temp = source[item];
-                            const val = temp.description.intermediate[position - 1];
+                        source.forEach(element => {
+                            const val = element.description.intermediate[position - 1];
                             if (val >= min && val <= max) {
-                                filterSource.push(temp);
+                                filterSource.push(element);
                             }
                         });
                     }

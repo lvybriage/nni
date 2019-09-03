@@ -23,15 +23,14 @@ class Compare extends React.Component<CompareProps, {}> {
         const { compareRows } = this.props;
         const trialIntermediate: Array<Intermedia> = [];
         const idsList: Array<string> = [];
-        Object.keys(compareRows).map(item => {
-            const temp = compareRows[item];
+        compareRows.forEach(item => {
             trialIntermediate.push({
-                name: temp.id,
-                data: temp.description.intermediate,
+                name: item.id,
+                data: item.description.intermediate,
                 type: 'line',
-                hyperPara: temp.description.parameters
+                hyperPara: item.description.parameters
             });
-            idsList.push(temp.id);
+            idsList.push(item.id);
         });
         // find max intermediate number
         trialIntermediate.sort((a, b) => { return (b.data.length - a.data.length); });
@@ -39,9 +38,8 @@ class Compare extends React.Component<CompareProps, {}> {
         // max length
         const length = trialIntermediate[0] !== undefined ? trialIntermediate[0].data.length : 0;
         const xAxis: Array<number> = [];
-        Object.keys(trialIntermediate).map(item => {
-            const temp = trialIntermediate[item];
-            legend.push(temp.name);
+        trialIntermediate.forEach(item => {
+            legend.push(item.name);
         });
         for (let i = 1; i <= length; i++) {
             xAxis.push(i);
@@ -114,11 +112,10 @@ class Compare extends React.Component<CompareProps, {}> {
         if (compareRows.length !== 0) {
             parameterKeys = Object.keys(compareRows[0].description.parameters);
         }
-        Object.keys(compareRows).map(item => {
-            const temp = compareRows[item];
-            idList.push(temp.id);
-            durationList.push(temp.duration);
-            parameterList.push(temp.description.parameters);
+        compareRows.forEach(item => {
+            idList.push(item.id);
+            durationList.push(item.duration);
+            parameterList.push(item.description.parameters);
         });
         return (
             <table className="compare">

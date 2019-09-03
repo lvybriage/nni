@@ -1,6 +1,7 @@
 import * as React from 'react';
 import axios from 'axios';
 import { downFile } from '../../static/function';
+import { TrialJobs, Metric } from '../../static/interface';
 import { Drawer, Tabs, Row, Col, Button } from 'antd';
 import { MANAGER_IP, DRAWEROPTION } from '../../static/const';
 import MonacoEditor from 'react-monaco-editor';
@@ -41,15 +42,15 @@ class ExperimentDrawer extends React.Component<ExpDrawerProps, ExpDrawerState> {
                     }
                     let trialMessagesArr = res1.data;
                     const interResultList = res2.data;
-                    Object.keys(trialMessagesArr).map(item => {
+                    trialMessagesArr.forEach((element: TrialJobs) => {
                         // not deal with trial's hyperParameters
-                        const trialId = trialMessagesArr[item].id;
+                        const trialId = element.id;
                         // add intermediate result message
-                        trialMessagesArr[item].intermediate = [];
-                        Object.keys(interResultList).map(key => {
-                            const interId = interResultList[key].trialJobId;
+                        element.intermediate = [];
+                        interResultList.forEach((item: Metric) => {
+                            const interId = item.trialJobId;
                             if (trialId === interId) {
-                                trialMessagesArr[item].intermediate.push(interResultList[key]);
+                                element.intermediate.push(item);
                             }
                         });
                     });

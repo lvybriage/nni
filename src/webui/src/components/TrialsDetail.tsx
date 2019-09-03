@@ -3,7 +3,7 @@ import axios from 'axios';
 import { MANAGER_IP } from '../static/const';
 import { Row, Col, Tabs, Select, Button, Icon } from 'antd';
 const Option = Select.Option;
-import { TableObj, Parameters, ExperimentInfo } from '../static/interface';
+import { TableObj, Parameters, ExperimentInfo, TrialJobs, Metric } from '../static/interface';
 import { getFinal } from '../static/function';
 import DefaultPoint from './trial-detail/DefaultMetricPoint';
 import Duration from './trial-detail/Duration';
@@ -103,36 +103,34 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
         axios
             .all([
                 axios.get(`${MANAGER_IP}/trial-jobs`),
-                axios.get(`${MANAGER_IP}/metric-data`)
+                axios.get(`${MANAGER_IP}/metric-data-latest`)
+                // axios.get(`${MANAGER_IP}/metric-data`)
             ])
             .then(axios.spread((res, res1) => {
                 if (res.status === 200 && res1.status === 200) {
                     const trialJobs = res.data;
-                    const metricSource = res1.data;
+                    // latest metric [final, latest intermediate]
+                    const metricSource: Array<Metric> = res1.data;
                     const trialTable: Array<TableObj> = [];
-                    Object.keys(trialJobs).map(item => {
+                    trialJobs.forEach((item: TrialJobs) => {
                         let desc: Parameters = {
                             parameters: {},
                             intermediate: [],
                             multiProgress: 1
                         };
                         let duration = 0;
-                        const id = trialJobs[item].id !== undefined
-                            ? trialJobs[item].id
-                            : '';
-                        const status = trialJobs[item].status !== undefined
-                            ? trialJobs[item].status
-                            : '';
-                        const begin = trialJobs[item].startTime;
-                        const end = trialJobs[item].endTime;
-                        if (begin) {
-                            if (end) {
+                        const id = item.id !== undefined ? item.id : '';
+                        const status = item.status !== undefined ? item.status : '';
+                        const begin = item.startTime;
+                        const end = item.endTime;
+                        if (begin !== undefined) {
+                            if (end !== undefined) {
                                 duration = (end - begin) / 1000;
                             } else {
                                 duration = (new Date().getTime() - begin) / 1000;
                             }
                         }
-                        const tempHyper = trialJobs[item].hyperParameters;
+                        const tempHyper = item.hyperParameters;
                         if (tempHyper !== undefined) {
                             const getPara = JSON.parse(tempHyper[tempHyper.length - 1]).parameters;
                             desc.multiProgress = tempHyper.length;
@@ -144,16 +142,20 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
                         } else {
                             desc.parameters = { error: 'This trial\'s parameters are not available.' };
                         }
-                        if (trialJobs[item].logPath !== undefined) {
-                            desc.logPath = trialJobs[item].logPath;
+                        if (item.logPath !== undefined) {
+                            desc.logPath = item.logPath;
                         }
 
-                        const acc = getFinal(trialJobs[item].finalMetricData);
+                        const acc = getFinal(item.finalMetricData);
                         // deal with intermediate result list
                         const mediate: Array<number> = [];
-                        Object.keys(metricSource).map(key => {
-                            const items = metricSource[key];
+                        let intermediateCount = 0;
+                        metricSource.forEach(items => {
                             if (items.trialJobId === id) {
+                                if (items.type !== 'FINAL') {
+                                    // sequence is start with 0, and final result is last.
+                                    intermediateCount = items.sequence + 2;
+                                }
                                 // succeed trial, last intermediate result is final result
                                 // final result format may be object
                                 if (typeof JSON.parse(items.data) === 'object') {
@@ -166,25 +168,27 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
                         desc.intermediate = mediate;
                         trialTable.push({
                             key: trialTable.length,
-                            sequenceId: trialJobs[item].sequenceId,
+                            sequenceId: item.sequenceId,
                             id: id,
                             status: status,
                             duration: duration,
                             acc: acc,
-                            description: desc
+                            description: desc,
+                            intermeidateCount: intermediateCount,
+                            startTime: item.startTime,
+                            endTime: (item.endTime !== undefined) ? item.endTime : undefined
                         });
                     });
                     // update search data result
                     const { searchResultSource, entriesInSelect } = this.state;
                     if (searchResultSource.length !== 0) {
-                        const temp: Array<number> = [];
-                        Object.keys(searchResultSource).map(index => {
-                            temp.push(searchResultSource[index].id);
+                        const temp: Array<string> = [];
+                        searchResultSource.forEach(index => {
+                            temp.push(index.id);
                         });
                         const searchResultList: Array<TableObj> = [];
                         for (let i = 0; i < temp.length; i++) {
-                            Object.keys(trialTable).map(key => {
-                                const item = trialTable[key];
+                            trialTable.forEach(item => {
                                 if (item.id === temp[i]) {
                                     searchResultList.push(item);
                                 }
@@ -223,8 +227,8 @@ class TrialsDetail extends React.Component<TrialsDetailProps, TrialDetailState> 
         } else {
             const { tableListSource, searchFilter } = this.state;
             const searchResultList: Array<TableObj> = [];
-            Object.keys(tableListSource).map(key => {
-                const item = tableListSource[key];
+
+            tableListSource.forEach(item => {
                 switch (searchFilter) {
                     case 'id':
                         if (item.id.toUpperCase().includes(targetValue.toUpperCase())) {

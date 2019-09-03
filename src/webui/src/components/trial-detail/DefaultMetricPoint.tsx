@@ -66,25 +66,25 @@ class DefaultPoint extends React.Component<DefaultPointProps, DefaultPointState>
                 }));
             }
         } else {
-            const resultList: Array<number | object>[] = [];
+            // resultList: [index, acc, searchSpace]
+            const resultList: Array<string | number | object>[] = [];
             // lineListDefault: [[sequenceId, default metric], []]
-            const lineListDefault: Array<number>[] = [];
-            Object.keys(drawSource).map(item => {
-                const temp = drawSource[item];
-                if (temp.acc !== undefined) {
-                    if (temp.acc.default !== undefined) {
-                        const searchSpace = temp.description.parameters;
-                        lineListDefault.push([temp.sequenceId, temp.acc.default]);
+            const lineListDefault: Array<string | number>[] = [];
+            drawSource.forEach(item => {
+                if (item.acc !== undefined) {
+                    if (item.acc.default !== undefined) {
+                        const searchSpace = item.description.parameters;
+                        lineListDefault.push([item.sequenceId, item.acc.default]);
                         accSource.push({
-                            acc: temp.acc.default,
-                            index: temp.sequenceId,
+                            acc: item.acc.default,
+                            index: item.sequenceId,
                             searchSpace: searchSpace
                         });
                     }
                 }
             });
             // deal with best metric line
-            const bestCurve: Array<number | object>[] = []; // best curve data source
+            const bestCurve: Array<number | object | string>[] = []; // best curve data source
             if (lineListDefault[0] !== undefined) {
                 bestCurve.push([lineListDefault[0][0], lineListDefault[0][1], accSource[0].searchSpace]);
             }
@@ -109,11 +109,8 @@ class DefaultPoint extends React.Component<DefaultPointProps, DefaultPointState>
                     }
                 }
             }
-            Object.keys(accSource).map(item => {
-                const items = accSource[item];
-                let temp: Array<number | object>;
-                temp = [items.index, items.acc, items.searchSpace];
-                resultList.push(temp);
+            accSource.forEach(items => {
+                resultList.push([items.index, items.acc, items.searchSpace]);
             });
             // isViewBestCurve: false show default metric graph
             // isViewBestCurve: true  show best curve
@@ -133,7 +130,7 @@ class DefaultPoint extends React.Component<DefaultPointProps, DefaultPointState>
         }
     }
 
-    drawBestcurve = (realDefault: Array<number | object>[], resultList: Array<number | object>[]) => {
+    drawBestcurve = (realDefault: Array<number | object | string>[], resultList: Array<string | number | object>[]) => {
         return {
             grid: {
                 left: '8%'
@@ -182,7 +179,7 @@ class DefaultPoint extends React.Component<DefaultPointProps, DefaultPointState>
         };
     }
 
-    drawDefaultMetric = (resultList: Array<number | object>[]) => {
+    drawDefaultMetric = (resultList: Array<string | number | object>[]) => {
         return {
             grid: {
                 left: '8%'
