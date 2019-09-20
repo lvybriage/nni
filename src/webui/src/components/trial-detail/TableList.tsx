@@ -9,6 +9,7 @@ import { convertDuration, intermediateGraphOption, killJob, filterByStatus } fro
 import { TableObj, TrialJob } from '../../static/interface';
 import OpenRow from '../public-child/OpenRow';
 import Compare from '../Modal/Compare';
+import Customize from '../Modal/CustomizedTrial';
 import IntermediateVal from '../public-child/IntermediateVal'; // table default metric column
 import '../../static/style/search.scss';
 require('../../static/style/tableStatus.css');
@@ -47,6 +48,8 @@ interface TableListState {
     intermediateData: Array<object>; // a trial's intermediate results (include dict)
     intermediateId: string;
     intermediateOtherKeys: Array<string>;
+    isShowCustomizedModal: boolean;
+    trialParameter: string;
 }
 
 interface ColumnIndex {
@@ -70,10 +73,12 @@ class TableList extends React.Component<TableListProps, TableListState> {
             isObjFinal: false,
             isShowColumn: false,
             isShowCompareModal: false,
+            isShowCustomizedModal: false,
             selectRows: [],
             selectedRowKeys: [], // close selected trial message after modal closed
             intermediateData: [],
             intermediateId: '',
+            trialParameter: '',
             intermediateOtherKeys: []
         };
     }
@@ -269,6 +274,25 @@ class TableList extends React.Component<TableListProps, TableListState> {
         }
     }
 
+    // open customized trial modal
+    setCustomizedTrial = (parameters: object) => {
+        if (this._isMounted === true) {
+            this.setState({
+                isShowCustomizedModal: true,
+                trialParameter: JSON.stringify(parameters)
+            });
+        }
+    }
+
+    closeCustomizedTrial = () => {
+        if (this._isMounted === true) {
+            this.setState({
+                isShowCustomizedModal: false,
+                trialParameter: ''
+            });
+        }
+    }
+
     componentDidMount() {
         this._isMounted = true;
     }
@@ -281,7 +305,9 @@ class TableList extends React.Component<TableListProps, TableListState> {
 
         const { entries, tableSource, updateList, columnList } = this.props;
         const { intermediateOption, modalVisible, isShowColumn,
-            selectRows, isShowCompareModal, selectedRowKeys, intermediateOtherKeys } = this.state;
+            selectRows, isShowCompareModal, selectedRowKeys, intermediateOtherKeys,
+            isShowCustomizedModal, trialParameter
+        } = this.state;
         const rowSelection = {
             selectedRowKeys: selectedRowKeys,
             onChange: (selected: string[] | number[], selectedRows: Array<TableObj>) => {
@@ -464,6 +490,15 @@ class TableList extends React.Component<TableListProps, TableListState> {
                                             <Icon type="stop" />
                                         </Button>
                                     </Popconfirm>
+                                    {/* Add a new trial-customized trial */}
+                                    <Button
+                                        type="primary"
+                                        className="common-style"
+                                        onClick={this.setCustomizedTrial.bind(this, record.description.parameters)}
+                                        title="Customized trial"
+                                    >
+                                        <Icon type="copy" />
+                                    </Button>
                                 </Row>
                             );
                         },
@@ -588,7 +623,14 @@ class TableList extends React.Component<TableListProps, TableListState> {
                         className="titleColumn"
                     />
                 </Modal>
+                {/* compare trials based message */}
                 <Compare compareRows={selectRows} visible={isShowCompareModal} cancelFunc={this.hideCompareModal} />
+                {/* clone trial parameters and could submit a customized trial */}
+                <Customize
+                    visible={isShowCustomizedModal}
+                    hyperParameter={trialParameter}
+                    closeCustomizeModal={this.closeCustomizedTrial}
+                />
             </Row>
         );
     }
